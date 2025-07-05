@@ -1,5 +1,5 @@
 TestCases:
-- name: allow no readwrite access readonly
+- name: allow readonly access
   allow: true
   input:
     Entities:
@@ -13,7 +13,7 @@ TestCases:
         - MyFirstModule.User
         - MyFirstModule.Admin
         DefaultMemberAccessRights: ReadOnly
-- name: allow no readwrite access none
+- name: allow none access
   allow: true
   input:
     Entities:
