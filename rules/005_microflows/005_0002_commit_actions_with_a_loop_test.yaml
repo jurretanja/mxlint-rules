@@ -1,24 +1,95 @@
+# Fixture microflows for transitive lookup live under ./ModuleA/*.yaml
+# and follow the type-scoped naming convention (Name.Microflows$Microflow.yaml)
+# used by other rule fixtures in this repo.
 TestCases:
-- name: allow loop without objects
+# --- allowed: structural / defensive ---
+- name: allow microflow with no looped activity
   allow: true
   input:
-    $Type: Microflow$Microflow
-    Name: MicroflowForLoop
-    MainFunction:
-      - Attributes:
-          $Type: Microflows$LoopedActivity
+    $Type: Microflows$Microflow
+    Name: NoLoop
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$ActionActivity
+          Action:
+            $Type: Microflows$RetrieveAction
+
+- name: allow looped activity with an empty body
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    Name: EmptyLoop
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
           ObjectCollection:
             $Type: Microflows$MicroflowObjectCollection
-            Objects: null
+            Objects: []
 
-- name: allow loop with change action without commit
+- name: allow committing sub-microflow when the call sits outside any loop
   allow: true
   input:
-    $Type: Microflow$Microflow
-    Name: MicroflowForLoop
-    MainFunction:
-      - Attributes:
-          $Type: Microflows$LoopedActivity
+    $Type: Microflows$Microflow
+    Name: CommitOutsideLoop
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$ActionActivity
+          Action:
+            $Type: Microflows$MicroflowCallAction
+            MicroflowCall:
+              $Type: Microflows$MicroflowCall
+              Microflow: ModuleA.CommitInLoop
+
+- name: allow loop calling a microflow reference that does not resolve to a file
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    Name: LoopCallsMissing
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: NonExistentModule.NonExistentFlow
+
+- name: allow loop calling a microflow reference without a module prefix
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    Name: LoopCallsMalformed
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: nodots
+
+# --- allowed: direct action inside the loop that does NOT commit ---
+- name: allow loop that directly contains a ChangeAction with Commit=No
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
           ObjectCollection:
             $Type: Microflows$MicroflowObjectCollection
             Objects:
@@ -27,14 +98,104 @@ TestCases:
                   $Type: Microflows$ChangeAction
                   Commit: "No"
 
-- name: do not allow loop with commit action
+- name: allow loop that directly contains a CreateChangeAction with Commit=No
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$CreateChangeAction
+                  Commit: "No"
+
+# --- allowed: loop -> sub that does NOT commit ---
+- name: allow loop calling sub-microflow that contains a ChangeAction with Commit=No
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.ChangeNoCommit
+
+- name: allow loop calling sub-microflow that contains a CreateChangeAction with Commit=No
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CreateNoCommit
+
+- name: allow loop calling sub-microflow that transitively reaches a ChangeAction with Commit=No
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CallsChangeNoCommit
+
+- name: allow loop calling a self-recursive sub-microflow that never commits
+  allow: true
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.RecursiveNoCommit
+
+# --- disallowed: direct commit-capable action inside the loop ---
+- name: do not allow loop that directly contains a CommitAction
   allow: false
   input:
-    $Type: Microflow$Microflow
-    Name: MicroflowForLoop
-    MainFunction:
-      - Attributes:
-          $Type: Microflows$LoopedActivity
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
           ObjectCollection:
             $Type: Microflows$MicroflowObjectCollection
             Objects:
@@ -42,14 +203,14 @@ TestCases:
                 Action:
                   $Type: Microflows$CommitAction
 
-- name: do not allow loop with change action with commit
+- name: do not allow loop that directly contains a ChangeAction with Commit=Yes
   allow: false
   input:
-    $Type: Microflow$Microflow
-    Name: MicroflowForLoop
-    MainFunction:
-      - Attributes:
-          $Type: Microflows$LoopedActivity
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
           ObjectCollection:
             $Type: Microflows$MicroflowObjectCollection
             Objects:
@@ -58,21 +219,146 @@ TestCases:
                   $Type: Microflows$ChangeAction
                   Commit: "Yes"
 
-- name: do not allow loop with both commit and change actions
+- name: do not allow loop that directly contains a CreateChangeAction with Commit=Yes
   allow: false
   input:
-    $Type: Microflow$Microflow
-    Name: MicroflowForLoop
-    MainFunction:
-      - Attributes:
-          $Type: Microflows$LoopedActivity
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
           ObjectCollection:
             $Type: Microflows$MicroflowObjectCollection
             Objects:
               - $Type: Microflows$ActionActivity
                 Action:
-                  $Type: Microflows$CommitAction
+                  $Type: Microflows$CreateChangeAction
+                  Commit: "Yes"
+
+# --- disallowed: loop -> sub with a commit-capable action ---
+- name: do not allow loop calling sub-microflow that contains a CommitAction
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
               - $Type: Microflows$ActionActivity
                 Action:
-                  $Type: Microflows$ChangeAction
-                  Commit: "Yes"
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CommitInLoop
+
+- name: do not allow loop calling sub-microflow that contains a ChangeAction with Commit=Yes
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.ChangeWithCommit
+
+- name: do not allow loop calling sub-microflow that contains a CreateChangeAction with Commit=Yes
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CreateWithCommit
+
+# --- disallowed: loop -> SUB -> sub with a commit-capable action ---
+- name: do not allow loop calling sub-microflow that transitively reaches a CommitAction
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CallsCommit
+
+- name: do not allow loop calling sub-microflow that transitively reaches a ChangeAction with Commit=Yes
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CallsChangeWithCommit
+
+- name: do not allow loop calling sub-microflow that transitively reaches a CreateChangeAction with Commit=Yes
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.CallsCreateWithCommit
+
+- name: do not allow loop calling a self-recursive sub-microflow that also contains a CommitAction
+  allow: false
+  input:
+    $Type: Microflows$Microflow
+    ObjectCollection:
+      $Type: Microflows$MicroflowObjectCollection
+      Objects:
+        - $Type: Microflows$LoopedActivity
+          ObjectCollection:
+            $Type: Microflows$MicroflowObjectCollection
+            Objects:
+              - $Type: Microflows$ActionActivity
+                Action:
+                  $Type: Microflows$MicroflowCallAction
+                  MicroflowCall:
+                    $Type: Microflows$MicroflowCall
+                    Microflow: ModuleA.RecursiveCommit

@@ -1,0 +1,11 @@
+$Type: Microflows$Microflow
+Name: CallsCreateWithCommit
+ObjectCollection:
+    $Type: Microflows$MicroflowObjectCollection
+    Objects:
+        - $Type: Microflows$ActionActivity
+          Action:
+            $Type: Microflows$MicroflowCallAction
+            MicroflowCall:
+                $Type: Microflows$MicroflowCall
+                Microflow: ModuleA.CreateWithCommit
