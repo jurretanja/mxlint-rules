@@ -28,8 +28,13 @@ if [ ! -f "$MXLINT" ]; then
 
 fi
 
+# copy rules into the default cache location that test-rules reads from
+mkdir -p .mendix-cache/rules
+cp -R ./rules/. .mendix-cache/rules/
+trap 'rm -rf .mendix-cache/' EXIT
+
 # capture all output to a file with tee
-$MXLINT test-rules --rules ./rules 2>&1 | tee /tmp/mxlint-test-rules.log
+$MXLINT test-rules 2>&1 | tee /tmp/mxlint-test-rules.log
 
 # grep for FAIL in the log file
 if grep -q "FAIL" /tmp/mxlint-test-rules.log; then
