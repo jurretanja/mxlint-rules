@@ -1,0 +1,11 @@
+$Type: Microflows$Microflow
+Name: CallsChangeNoCommit
+ObjectCollection:
+    $Type: Microflows$MicroflowObjectCollection
+    Objects:
+        - $Type: Microflows$ActionActivity
+          Action:
+            $Type: Microflows$MicroflowCallAction
+            MicroflowCall:
+                $Type: Microflows$MicroflowCall
+                Microflow: ModuleA.ChangeNoCommit

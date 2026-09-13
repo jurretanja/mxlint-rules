@@ -1,0 +1,9 @@
+$Type: Microflows$Microflow
+Name: CreateWithCommit
+ObjectCollection:
+    $Type: Microflows$MicroflowObjectCollection
+    Objects:
+        - $Type: Microflows$ActionActivity
+          Action:
+            $Type: Microflows$CreateChangeAction
+            Commit: "Yes"

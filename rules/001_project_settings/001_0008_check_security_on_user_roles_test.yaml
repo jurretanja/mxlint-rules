@@ -1,0 +1,13 @@
+TestCases:
+- name: allow user role that is checked for security
+  allow: true
+  input:
+    UserRoles:
+      - Name: Administrator
+        CheckSecurity: true
+- name: do not allow user role that is not checked for security
+  allow: false
+  input:
+    UserRoles:
+      - Name: Administrator
+        CheckSecurity: false
